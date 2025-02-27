@@ -2,7 +2,6 @@
 
 import { FC, useState } from "react";
 import {
-  Container,
   Box,
   Typography,
   ToggleButton,
@@ -108,78 +107,76 @@ const RequestsPage: FC = () => {
   };
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ mb: 4 }}>
+    <Box sx={{ mb: 4 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4" component="h1">
+          Заявки
+        </Typography>
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={handleViewModeChange}
+          size="small"
+        >
+          <ToggleButton value="table">
+            <ViewListIcon />
+          </ToggleButton>
+          <ToggleButton value="cards">
+            <ViewModuleIcon />
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
+      <Paper sx={{ mb: 3 }}>
+        <Tabs
+          value={activeGroup}
+          onChange={handleGroupChange}
+          sx={{ borderBottom: 1, borderColor: "divider" }}
+        >
+          <Tab label="Мои заявки" value="my" />
+          <Tab label="На согласовании" value="approval" />
+          <Tab label="Все заявки" value="all" />
+        </Tabs>
+      </Paper>
+
+      <RequestFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        systems={MOCK_SYSTEMS}
+      />
+
+      {viewMode === "table" ? (
+        <RequestTable requests={requests} onSelect={handleRequestSelect} />
+      ) : (
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+              lg: "repeat(4, 1fr)",
+            },
+            gap: 3,
           }}
         >
-          <Typography variant="h4" component="h1">
-            Заявки
-          </Typography>
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={handleViewModeChange}
-            size="small"
-          >
-            <ToggleButton value="table">
-              <ViewListIcon />
-            </ToggleButton>
-            <ToggleButton value="cards">
-              <ViewModuleIcon />
-            </ToggleButton>
-          </ToggleButtonGroup>
+          {requests.map((request) => (
+            <RequestCard
+              key={request.id}
+              request={request}
+              onSelect={handleRequestSelect}
+            />
+          ))}
         </Box>
-
-        <Paper sx={{ mb: 3 }}>
-          <Tabs
-            value={activeGroup}
-            onChange={handleGroupChange}
-            sx={{ borderBottom: 1, borderColor: "divider" }}
-          >
-            <Tab label="Мои заявки" value="my" />
-            <Tab label="На согласовании" value="approval" />
-            <Tab label="Все заявки" value="all" />
-          </Tabs>
-        </Paper>
-
-        <RequestFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          systems={MOCK_SYSTEMS}
-        />
-
-        {viewMode === "table" ? (
-          <RequestTable requests={requests} onSelect={handleRequestSelect} />
-        ) : (
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(4, 1fr)",
-              },
-              gap: 3,
-            }}
-          >
-            {requests.map((request) => (
-              <RequestCard
-                key={request.id}
-                request={request}
-                onSelect={handleRequestSelect}
-              />
-            ))}
-          </Box>
-        )}
-      </Box>
-    </Container>
+      )}
+    </Box>
   );
 };
 

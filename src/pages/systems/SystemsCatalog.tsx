@@ -1,6 +1,7 @@
+// src/pages/systems/SystemsCatalog.tsx
+
 import { FC, useState, useEffect } from "react";
 import {
-  Container,
   Grid,
   TextField,
   Typography,
@@ -8,14 +9,8 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
+import { System } from "../../types/system";
 import SystemCard from "../../components/features/systems/SystemCard";
-
-interface System {
-  id: string;
-  name: string;
-  description: string;
-  url: string;
-}
 
 // Моковые данные из ТЗ
 const MOCK_SYSTEMS: System[] = [
@@ -68,38 +63,36 @@ const SystemsCatalog: FC = () => {
   }, [searchQuery]);
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Каталог систем
-        </Typography>
-        <TextField
-          fullWidth
-          placeholder="Поиск системы по названию или описанию..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 4 }}
-        />
-        <Grid container spacing={3}>
-          {systems.map((system) => (
-            <Grid item xs={12} sm={6} md={4} key={system.id}>
-              <SystemCard
-                name={system.name}
-                description={system.description}
-                url={system.url}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    </Container>
+    <Box sx={{ mb: 4, width: "100%" }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        Каталог систем
+      </Typography>
+      <TextField
+        fullWidth
+        placeholder="Поиск системы по названию или описанию..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
+        sx={{ mb: 4, width: "100%" }}
+      />
+      <Grid container spacing={3} sx={{ width: "100%" }}>
+        {systems.map((system) => (
+          <Grid item xs={12} sm={6} md={4} key={system.id}>
+            <SystemCard
+              name={system.name}
+              description={system.description}
+              url={system.url}
+            />
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
   );
 };
 

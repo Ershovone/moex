@@ -2,7 +2,6 @@
 
 import { FC, useState, useEffect } from "react";
 import {
-  Container,
   TextField,
   Typography,
   Box,
@@ -85,46 +84,44 @@ const ServicesCatalog: FC = () => {
   }, [searchQuery]);
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Каталог услуг
-        </Typography>
+    <Box sx={{ mb: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        Каталог услуг
+      </Typography>
 
-        <TextField
-          fullWidth
-          placeholder="Поиск услуги по названию или описанию..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 3 }}
-        />
+      <TextField
+        fullWidth
+        placeholder="Поиск услуги по названию или описанию..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
+        sx={{ mb: 3 }}
+      />
 
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
-          sx={{ mb: 3 }}
-        >
-          {TABS.map((tab) => (
-            <Tab key={tab} label={tab} />
-          ))}
-        </Tabs>
-
-        {serviceGroups.map((group) => (
-          <ServiceGroupComponent
-            key={group.id}
-            group={group}
-            onSelectService={handleServiceSelect}
-          />
+      <Tabs
+        value={activeTab}
+        onChange={(_, newValue) => setActiveTab(newValue)}
+        sx={{ mb: 3 }}
+      >
+        {TABS.map((tab) => (
+          <Tab key={tab} label={tab} />
         ))}
-      </Box>
-    </Container>
+      </Tabs>
+
+      {serviceGroups.map((group) => (
+        <ServiceGroupComponent
+          key={group.id}
+          group={group}
+          onSelectService={handleServiceSelect}
+        />
+      ))}
+    </Box>
   );
 };
 

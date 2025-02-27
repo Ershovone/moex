@@ -1,14 +1,7 @@
 // src/pages/admin/AdminPage.tsx
 
 import { FC, useState } from "react";
-import {
-  Container,
-  Box,
-  Tabs,
-  Tab,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { Box, Tabs, Tab, Snackbar, Alert } from "@mui/material";
 import {
   Settings as SettingsIcon,
   Apps as AppsIcon,
@@ -298,7 +291,7 @@ const AdminPage: FC = () => {
   };
 
   return (
-    <Container maxWidth="xl">
+    <>
       <Box sx={{ width: "100%", mb: 4 }}>
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
           <Tabs
@@ -426,7 +419,7 @@ const AdminPage: FC = () => {
           {notification.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </>
   );
 };
 
