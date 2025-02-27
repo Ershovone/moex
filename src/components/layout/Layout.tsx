@@ -1,29 +1,24 @@
-import { NotificationPanel } from "../features/notifications";
-import { useNotifications } from "../../contexts/NotificationContext";
+// src/components/layout/Layout.tsx
 import { FC, ReactNode, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
-  AppBar,
-  Toolbar,
   Drawer,
-  IconButton,
   Typography,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Avatar,
   ListItemButton,
 } from "@mui/material";
 import {
-  Menu as MenuIcon,
   Dashboard as DashboardIcon,
   Assignment as AssignmentIcon,
   Task as TaskIcon,
   AdminPanelSettings as AdminIcon,
   Support as SupportIcon,
 } from "@mui/icons-material";
+import Header from "./Header"; // Импортируем новый компонент заголовка
 
 const drawerWidth = 240;
 
@@ -55,17 +50,10 @@ const Layout: FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Получаем доступ к контексту уведомлений
-  const {
-    notificationState,
-    markAsRead,
-    markAllAsRead,
-    handleNotificationClick,
-  } = useNotifications();
-
   // В реальном приложении это должно приходить из контекста аутентификации
   const isAdmin = true; // Временно включим для всех
   const isSupportSpecialist = true; // Временно включим для всех
+  const userName = "Иванов И.И."; // Имя пользователя для отображения в Header
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -73,11 +61,18 @@ const Layout: FC<LayoutProps> = ({ children }) => {
 
   const drawer = (
     <Box>
-      <Toolbar>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          p: 2,
+          borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+        }}
+      >
         <Typography variant="h6" noWrap component="div">
           MOEX Services
         </Typography>
-      </Toolbar>
+      </Box>
       <List>
         {menuItems
           .filter(
@@ -105,37 +100,8 @@ const Layout: FC<LayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          bgcolor: "white",
-          color: "black",
-          height: "64px", // Фиксированная высота AppBar
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: "none" } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Box sx={{ flexGrow: 1 }} />
-          <NotificationPanel
-            notifications={notificationState.notifications}
-            unreadCount={notificationState.unreadCount}
-            onMarkAsRead={markAsRead}
-            onMarkAllAsRead={markAllAsRead}
-            onNotificationClick={handleNotificationClick}
-          />
-          <Avatar sx={{ ml: 1 }}>ИИ</Avatar>
-        </Toolbar>
-      </AppBar>
+      {/* Заменяем старый AppBar на новый компонент Header */}
+      <Header userName={userName} />
 
       <Box
         component="nav"
