@@ -12,54 +12,30 @@ import { Search as SearchIcon } from "@mui/icons-material";
 import { System } from "../../types/system";
 import SystemCard from "../../components/features/systems/SystemCard";
 
-// Моковые данные из ТЗ
-const MOCK_SYSTEMS: System[] = [
-  {
-    id: "1",
-    name: "ITSM",
-    description: "Небольшое описание в две строки очень кратко и лаконично",
-    url: "#",
-  },
-  {
-    id: "2",
-    name: "MPG (ESM + Finance)",
-    description: "Небольшое описание в две строки очень кратко и лаконично",
-    url: "#",
-  },
-  {
-    id: "3",
-    name: "HRSM",
-    description: "Небольшое описание в две строки очень кратко и лаконично",
-    url: "#",
-  },
-  {
-    id: "4",
-    name: "Progress",
-    description: "Небольшое описание в две строки очень кратко и лаконично",
-    url: "#",
-  },
-];
+// Импортируем сервис для работы с системами
+import { SystemDataService } from "../../services";
 
 const SystemsCatalog: FC = () => {
-  const [systems, setSystems] = useState<System[]>(MOCK_SYSTEMS);
+  const [systems, setSystems] = useState<System[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filterSystems = (query: string) => {
-    if (!query) {
-      setSystems(MOCK_SYSTEMS);
-      return;
-    }
-
-    const filtered = MOCK_SYSTEMS.filter(
-      (system) =>
-        system.name.toLowerCase().includes(query.toLowerCase()) ||
-        system.description.toLowerCase().includes(query.toLowerCase())
-    );
-    setSystems(filtered);
-  };
-
+  // Загружаем системы при монтировании компонента
   useEffect(() => {
-    filterSystems(searchQuery);
+    const allSystems = SystemDataService.getAllSystems();
+    setSystems(allSystems);
+  }, []);
+
+  // Фильтруем системы при изменении поискового запроса
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      // Если поисковый запрос пустой, загружаем все системы
+      const allSystems = SystemDataService.getAllSystems();
+      setSystems(allSystems);
+    } else {
+      // Иначе выполняем поиск
+      const filteredSystems = SystemDataService.searchSystems(searchQuery);
+      setSystems(filteredSystems);
+    }
   }, [searchQuery]);
 
   return (
@@ -91,6 +67,15 @@ const SystemsCatalog: FC = () => {
             />
           </Grid>
         ))}
+        {systems.length === 0 && (
+          <Grid item xs={12}>
+            <Typography variant="body1" color="text.secondary" align="center">
+              {searchQuery
+                ? "Систем, соответствующих критериям поиска, не найдено"
+                : "Нет доступных систем"}
+            </Typography>
+          </Grid>
+        )}
       </Grid>
     </Box>
   );

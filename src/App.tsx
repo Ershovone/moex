@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import Layout from "./components/layout/Layout";
@@ -14,10 +16,16 @@ import TasksPage from "./pages/tasks/TasksPage";
 import AdminPage from "./pages/admin/AdminPage";
 import SupportPage from "./pages/support/SupportPage";
 
+// Импорт функции инициализации сервисов
+import { initializeServices } from "./services";
+
 function App() {
   useEffect(() => {
     // Настройка управления фокусом при запуске приложения
     setupFocusManagement();
+
+    // Инициализируем сервисы данных при первой загрузке приложения
+    initializeServices();
   }, []);
 
   return (

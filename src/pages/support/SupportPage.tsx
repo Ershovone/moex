@@ -22,57 +22,32 @@ import UserInfo from "../../components/features/support/UserInfo";
 import { RequestTable } from "../../components/features/requests";
 import { RequestFilters } from "../../components/features/requests";
 import { User } from "../../types/support";
-import { Request } from "../../types/request";
+import {
+  Request,
+  RequestFilters as RequestFiltersType,
+} from "../../types/request";
 
-// Моковые данные для заявок пользователя
-const mockUserRequests = (userId: string): Request[] => [
-  {
-    id: `${userId}-req-1`,
-    systemId: "itsm",
-    systemName: "ITSM",
-    authorId: userId,
-    authorName: "Иванов И.И.",
-    executorId: "user3",
-    executorName: "Сидоров С.С.",
-    typeId: "access",
-    typeName: "Заявка на доступ",
-    number: "REQ-2024-001",
-    content: "Предоставить доступ к системе документооборота",
-    status: "new",
-    createdAt: "2024-02-24T10:00:00",
-    url: "#",
-  },
-  {
-    id: `${userId}-req-2`,
-    systemId: "hrsm",
-    systemName: "HRSM",
-    authorId: userId,
-    authorName: "Иванов И.И.",
-    typeId: "vacation",
-    typeName: "Заявление на отпуск",
-    number: "REQ-2024-002",
-    content: "Плановый отпуск с 01.03.2024 по 14.03.2024",
-    status: "on_approval",
-    createdAt: "2024-02-23T15:30:00",
-    plannedDate: "2024-03-01T00:00:00",
-    url: "#",
-  },
-];
+// Импортируем сервисы для работы с данными
+import {
+  UserDataService,
+  RequestDataService,
+  SystemDataService,
+  AdminDataService,
+} from "../../services";
+import useFeedback from "../../hooks/useFeedback";
 
 const SupportPage: FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userRequests, setUserRequests] = useState<Request[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<Request[]>([]);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [activeTab, setActiveTab] = useState<"all" | "active" | "closed">(
     "all"
   );
-  const [notification, setNotification] = useState({
-    open: false,
-    message: "",
-    severity: "info" as "info" | "success" | "warning" | "error",
-  });
-
-  const [filters, setFilters] = useState({
+  const [systems, setSystems] = useState<Array<{ id: string; name: string }>>(
+    []
+  );
+  const [filters, setFilters] = useState<RequestFiltersType>({
     search: "",
     system: undefined,
     status: undefined,
@@ -81,27 +56,131 @@ const SupportPage: FC = () => {
     responsible: undefined,
   });
 
+  const { feedback, showFeedback, closeFeedback } = useFeedback();
+
+  // Проверяем права доступа при монтировании компонента
+  useEffect(() => {
+    const currentUser = UserDataService.getCurrentUser();
+
+    // Проверяем, является ли текущий пользователь специалистом поддержки
+    const isSupportSpecialist = AdminDataService.isSupportSpecialist(
+      currentUser.id
+    );
+
+    if (!isSupportSpecialist) {
+      showFeedback("У вас нет прав для доступа к этой странице", "error");
+    }
+
+    // Загружаем системы для фильтрации
+    const allSystems = SystemDataService.getAllSystems();
+    setSystems(
+      allSystems.map((system) => ({ id: system.id, name: system.name }))
+    );
+  }, [showFeedback]);
+
+  // Загрузка заявок пользователя при его выборе
   useEffect(() => {
     if (selectedUser) {
-      // В реальном приложении здесь будет запрос к API
-      const requests = mockUserRequests(selectedUser.id);
+      const requests = RequestDataService.getUserRequests(selectedUser.id);
       setUserRequests(requests);
+      applyFilters(requests);
+
+      showFeedback(
+        `Загружены заявки пользователя ${selectedUser.fullName}`,
+        "success"
+      );
     } else {
       setUserRequests([]);
+      setFilteredRequests([]);
     }
-  }, [selectedUser]);
+  }, [selectedUser, showFeedback]);
 
-  const handleUserSelect = (user: User | null) => {
-    setSelectedUser(user);
-    if (user) {
-      setNotification({
-        open: true,
-        message: `Загружены заявки пользователя ${user.fullName}`,
-        severity: "success",
-      });
+  // Применение фильтров к заявкам
+  const applyFilters = (requests: Request[]) => {
+    let filtered = [...requests];
+
+    // Фильтр по вкладке
+    if (activeTab === "active") {
+      filtered = filtered.filter((request) =>
+        ["new", "in_progress", "on_approval"].includes(request.status)
+      );
+    } else if (activeTab === "closed") {
+      filtered = filtered.filter((request) =>
+        ["completed", "closed", "cancelled"].includes(request.status)
+      );
     }
+
+    // Применение остальных фильтров
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(
+        (request) =>
+          request.number.toLowerCase().includes(searchLower) ||
+          request.content.toLowerCase().includes(searchLower) ||
+          request.typeName.toLowerCase().includes(searchLower) ||
+          request.systemName.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (filters.system) {
+      filtered = filtered.filter(
+        (request) => request.systemId === filters.system
+      );
+    }
+
+    if (filters.status) {
+      filtered = filtered.filter(
+        (request) => request.status === filters.status
+      );
+    }
+
+    if (filters.dateFrom) {
+      const dateFrom = new Date(filters.dateFrom);
+      filtered = filtered.filter(
+        (request) => new Date(request.createdAt) >= dateFrom
+      );
+    }
+
+    if (filters.dateTo) {
+      const dateTo = new Date(filters.dateTo);
+      dateTo.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(
+        (request) => new Date(request.createdAt) <= dateTo
+      );
+    }
+
+    if (filters.responsible) {
+      filtered = filtered.filter(
+        (request) =>
+          request.executorId === filters.responsible ||
+          (request.executorName && filters.responsible &&
+            request.executorName
+              .toLowerCase()
+              .includes(filters.responsible.toLowerCase()))
+      );
+    }
+
+    setFilteredRequests(filtered);
   };
 
+  // Обработчик выбора пользователя
+  const handleUserSelect = (user: User | null) => {
+    setSelectedUser(user);
+
+    // Сбрасываем фильтры при смене пользователя
+    setFilters({
+      search: "",
+      system: undefined,
+      status: undefined,
+      dateFrom: undefined,
+      dateTo: undefined,
+      responsible: undefined,
+    });
+
+    setActiveTab("all");
+  };
+
+  // Обработчик изменения режима отображения
   const handleViewModeChange = (
     _: React.MouseEvent<HTMLElement>,
     newMode: "table" | "cards" | null
@@ -111,34 +190,31 @@ const SupportPage: FC = () => {
     }
   };
 
+  // Обработчик изменения вкладки
   const handleTabChange = (
     _: React.SyntheticEvent,
     newValue: "all" | "active" | "closed"
   ) => {
     setActiveTab(newValue);
+    applyFilters(userRequests);
   };
 
+  // Обработчик выбора заявки
   const handleRequestSelect = (request: Request) => {
     window.open(request.url, "_blank");
+    showFeedback(`Открыта заявка №${request.number}`, "info");
   };
 
-  const handleFiltersChange = (newFilters: any) => {
+  // Обработчик изменения фильтров
+  const handleFiltersChange = (newFilters: RequestFiltersType) => {
     setFilters(newFilters);
+    applyFilters(userRequests);
   };
 
-  const handleCloseNotification = () => {
-    setNotification((prev) => ({ ...prev, open: false }));
-  };
-
-  // Фильтрация заявок по активной вкладке
-  const filteredRequests = userRequests.filter((request) => {
-    if (activeTab === "active") {
-      return ["new", "in_progress", "on_approval"].includes(request.status);
-    } else if (activeTab === "closed") {
-      return ["completed", "closed", "cancelled"].includes(request.status);
-    }
-    return true;
-  });
+  // Эффект для обновления фильтрации при изменении фильтров или вкладки
+  useEffect(() => {
+    applyFilters(userRequests);
+  }, [filters, activeTab]);
 
   return (
     <Container maxWidth="xl">
@@ -196,11 +272,7 @@ const SupportPage: FC = () => {
               <RequestFilters
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
-                systems={[
-                  { id: "itsm", name: "ITSM" },
-                  { id: "hrsm", name: "HRSM" },
-                  { id: "mpg", name: "MPG" },
-                ]}
+                systems={systems}
               />
             </Paper>
 
@@ -225,15 +297,12 @@ const SupportPage: FC = () => {
       </Box>
 
       <Snackbar
-        open={notification.open}
+        open={feedback.open}
         autoHideDuration={4000}
-        onClose={handleCloseNotification}
+        onClose={closeFeedback}
       >
-        <Alert
-          onClose={handleCloseNotification}
-          severity={notification.severity}
-        >
-          {notification.message}
+        <Alert onClose={closeFeedback} severity={feedback.severity}>
+          {feedback.message}
         </Alert>
       </Snackbar>
     </Container>

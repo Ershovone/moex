@@ -8,61 +8,7 @@ import React, {
   useEffect,
 } from "react";
 import { Notification, NotificationState } from "../types/notification";
-
-// Пример данных для нотификаций
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    title: "Заявка №1110037 была успешно выполнена",
-    description: "Заявка на обучение успешно завершена",
-    createdAt: "2024-02-26T10:15:00",
-    read: false,
-    documentNumber: "1110037",
-    system: "HRSM",
-    type: "success",
-    url: "#",
-  },
-  {
-    id: "2",
-    title: "Заявка №1110025 на перенос отпуска согласована",
-    description: "Заявка согласована руководителем",
-    createdAt: "2024-02-26T10:17:00",
-    read: false,
-    documentNumber: "1110025",
-    system: "HRSM",
-    type: "info",
-    url: "#",
-  },
-  {
-    id: "3",
-    title: "Заявка №1110010 по перенос отпуска требует согласования",
-    description: "Новая заявка ожидает вашего согласования",
-    createdAt: "2024-02-26T10:10:00",
-    read: true,
-    documentNumber: "1110010",
-    system: "HRSM",
-    type: "warning",
-    url: "#",
-  },
-  {
-    id: "4",
-    title: "Каталог услуг был обновлен",
-    description: "Обновлен список доступных услуг",
-    createdAt: "2024-02-23T22:38:00",
-    read: true,
-    system: "Витрина услуг",
-    type: "info",
-  },
-  {
-    id: "5",
-    title: "В вашу группу добавлены 2 человека",
-    description: 'В группу "Разработчики" добавлены 2 новых сотрудника',
-    createdAt: "2024-02-02T23:58:00",
-    read: true,
-    system: "AD",
-    type: "info",
-  },
-];
+import { NotificationDataService, AdminDataService } from "../services";
 
 // Интерфейс для контекста
 interface NotificationContextProps {
@@ -88,11 +34,28 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [notificationState, setNotificationState] = useState<NotificationState>(
     {
-      notifications: MOCK_NOTIFICATIONS,
-      unreadCount: MOCK_NOTIFICATIONS.filter((n) => !n.read).length,
+      notifications: [],
+      unreadCount: 0,
       isOpen: false,
     }
   );
+
+  // Загружаем уведомления при монтировании компонента
+  useEffect(() => {
+    const notifications = NotificationDataService.getAllNotifications();
+    const unreadCount = NotificationDataService.getUnreadCount();
+
+    setNotificationState({
+      notifications,
+      unreadCount,
+      isOpen: false,
+    });
+
+    // Очищаем старые уведомления
+    const notificationStorageDays =
+      AdminDataService.getGlobalParamValue<number>("param-3", 30);
+    NotificationDataService.clearOldNotifications(notificationStorageDays);
+  }, []);
 
   const openNotifications = useCallback(() => {
     setNotificationState((prev) => ({ ...prev, isOpen: true }));
@@ -103,6 +66,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const markAsRead = useCallback((id: string) => {
+    NotificationDataService.markAsRead(id);
+
     setNotificationState((prev) => {
       const updatedNotifications = prev.notifications.map((notification) =>
         notification.id === id ? { ...notification, read: true } : notification
@@ -111,12 +76,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
       return {
         ...prev,
         notifications: updatedNotifications,
-        unreadCount: updatedNotifications.filter((n) => !n.read).length,
+        unreadCount: NotificationDataService.getUnreadCount(),
       };
     });
   }, []);
 
   const markAllAsRead = useCallback(() => {
+    NotificationDataService.markAllAsRead();
+
     setNotificationState((prev) => {
       const updatedNotifications = prev.notifications.map((notification) => ({
         ...notification,
@@ -133,12 +100,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const addNotification = useCallback(
     (notification: Omit<Notification, "id" | "createdAt" | "read">) => {
-      const newNotification: Notification = {
-        ...notification,
-        id: `notification-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        read: false,
-      };
+      const newNotification =
+        NotificationDataService.addNotification(notification);
 
       setNotificationState((prev) => ({
         ...prev,
@@ -167,7 +130,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     [markAsRead, closeNotifications]
   );
 
-  // Имитация получения новых уведомлений
+  // Имитация получения новых уведомлений (для демонстрации)
   useEffect(() => {
     const demoMessages = [
       {

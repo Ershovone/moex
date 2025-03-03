@@ -10,76 +10,43 @@ import {
   Paper,
 } from "@mui/material";
 import { User } from "../../../types/support";
+import { UserDataService } from "../../../services";
 
 interface UserSearchProps {
   onUserSelect: (user: User | null) => void;
 }
 
-// Моковые данные пользователей
-const MOCK_USERS: User[] = [
-  {
-    id: "user1",
-    fullName: "Иванов Иван Иванович",
-    email: "ivanov@example.com",
-    department: "Отдел разработки",
-    position: "Старший разработчик",
-  },
-  {
-    id: "user2",
-    fullName: "Петров Петр Петрович",
-    email: "petrov@example.com",
-    department: "Отдел тестирования",
-    position: "Тестировщик",
-  },
-  {
-    id: "user3",
-    fullName: "Сидорова Анна Владимировна",
-    email: "sidorova@example.com",
-    department: "Отдел маркетинга",
-    position: "Маркетолог",
-  },
-  {
-    id: "user4",
-    fullName: "Козлов Дмитрий Сергеевич",
-    email: "kozlov@example.com",
-    department: "Отдел продаж",
-    position: "Менеджер по продажам",
-  },
-  {
-    id: "user5",
-    fullName: "Смирнова Елена Александровна",
-    email: "smirnova@example.com",
-    department: "Бухгалтерия",
-    position: "Главный бухгалтер",
-  },
-];
-
 const UserSearch: FC<UserSearchProps> = ({ onUserSelect }) => {
   const [searchValue, setSearchValue] = useState<string>("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Поиск пользователей при вводе поискового запроса
   useEffect(() => {
     if (searchValue.length > 2) {
-      const lowerCaseSearch = searchValue.toLowerCase();
-      const filtered = MOCK_USERS.filter(
-        (user) =>
-          user.fullName.toLowerCase().includes(lowerCaseSearch) ||
-          user.email.toLowerCase().includes(lowerCaseSearch) ||
-          user.department.toLowerCase().includes(lowerCaseSearch) ||
-          user.position.toLowerCase().includes(lowerCaseSearch)
-      );
-      setFilteredUsers(filtered);
+      setIsLoading(true);
+      
+      // Имитация небольшой задержки для реалистичности
+      const timer = setTimeout(() => {
+        const users = UserDataService.searchUsers(searchValue);
+        setFilteredUsers(users);
+        setIsLoading(false);
+      }, 300);
+      
+      return () => clearTimeout(timer);
     } else {
       setFilteredUsers([]);
     }
   }, [searchValue]);
 
+  // Обработчик выбора пользователя
   const handleUserSelect = (value: User | null) => {
     setSelectedUser(value);
     onUserSelect(value);
   };
 
+  // Получение метки для отображения варианта поиска
   const getOptionLabel = (option: User) => option.fullName;
 
   return (
@@ -113,8 +80,12 @@ const UserSearch: FC<UserSearchProps> = ({ onUserSelect }) => {
           </Box>
         </Paper>
       )}
-      noOptionsText="Пользователь не найден"
-      loading={searchValue.length > 2 && filteredUsers.length === 0}
+      noOptionsText={
+        searchValue.length > 2
+          ? "Пользователь не найден"
+          : "Введите минимум 3 символа для поиска"
+      }
+      loading={isLoading}
       loadingText="Поиск..."
       fullWidth
     />
