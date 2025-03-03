@@ -190,8 +190,6 @@ const TasksPage: FC = () => {
 
       const newTask = TaskDataService.saveTask({
         ...task,
-        id: undefined, // Новый ID будет сгенерирован сервисом
-        number: undefined, // Новый номер будет сгенерирован сервисом
         title: copyTitle,
         status: "active",
         createdAt: new Date().toISOString(),
