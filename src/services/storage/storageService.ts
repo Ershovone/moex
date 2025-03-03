@@ -13,7 +13,8 @@ class StorageService {
   static get<T>(key: string, defaultValue: T): T {
     try {
       const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : defaultValue;
+      if (!item) return defaultValue;
+      return JSON.parse(item) as T;
     } catch (error) {
       console.error(`Error getting item ${key} from localStorage:`, error);
       return defaultValue;
@@ -28,6 +29,7 @@ class StorageService {
   static set<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
+      console.log(`Successfully saved ${key} to localStorage`);
     } catch (error) {
       console.error(`Error setting item ${key} in localStorage:`, error);
     }

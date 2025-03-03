@@ -17,7 +17,7 @@ import AdminPage from "./pages/admin/AdminPage";
 import SupportPage from "./pages/support/SupportPage";
 
 // Импорт функции инициализации сервисов
-import { initializeServices } from "./services";
+import initializeServices from "./utils/initializeServices";
 
 function App() {
   useEffect(() => {
@@ -26,6 +26,9 @@ function App() {
 
     // Инициализируем сервисы данных при первой загрузке приложения
     initializeServices();
+
+    // Отладочная информация
+    console.log("App initialized, services loaded");
   }, []);
 
   return (

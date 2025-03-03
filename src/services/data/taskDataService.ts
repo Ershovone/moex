@@ -97,9 +97,15 @@ class TaskDataService {
    */
   static initialize(): void {
     const tasks = StorageService.get<Task[]>(STORAGE_KEY, []);
+    console.log("Initializing TaskDataService, found tasks:", tasks.length);
+
     if (tasks.length === 0) {
+      console.log("No tasks found, setting default tasks");
       StorageService.set(STORAGE_KEY, DEFAULT_TASKS);
     }
+
+    // Обновляем daysLeft для существующих задач
+    this.updateDaysLeft();
   }
 
   /**
@@ -212,9 +218,27 @@ class TaskDataService {
    * Сохраняет задачу
    * @param task - Задача для сохранения
    */
+  // Обновленная версия метода saveTask в src/services/data/taskDataService.ts
   static saveTask(task: Task): Task {
+    // Получаем текущие задачи из localStorage
     const tasks = this.getAllTasks();
     const index = tasks.findIndex((t) => t.id === task.id);
+
+    // Добавляем обязательные поля для новой задачи
+    if (!task.id) {
+      task.id = `task-${Date.now()}`;
+    }
+    if (!task.number) {
+      task.number = `TASK-${new Date()
+        .toISOString()
+        .slice(0, 10)
+        .replace(/-/g, "")}-${Math.floor(Math.random() * 1000)
+        .toString()
+        .padStart(3, "0")}`;
+    }
+    if (!task.createdAt) {
+      task.createdAt = new Date().toISOString();
+    }
 
     // Рассчитываем daysLeft, если указана дата завершения
     if (task.dueDate) {
@@ -222,7 +246,6 @@ class TaskDataService {
       const today = new Date();
       const diffTime = dueDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
       task.daysLeft = diffDays;
     }
 
@@ -240,19 +263,15 @@ class TaskDataService {
       tasks[index] = task;
     } else {
       // Добавление новой задачи
-      if (!task.id) {
-        task.id = `task-${Date.now()}`;
-      }
-      if (!task.number) {
-        task.number = `TASK-${Date.now()}`;
-      }
-      if (!task.createdAt) {
-        task.createdAt = new Date().toISOString();
-      }
       tasks.push(task);
     }
 
+    // Важно: сохраняем обновленный массив задач в localStorage
     StorageService.set(STORAGE_KEY, tasks);
+
+    // Для отладки - выводим в консоль
+    console.log("Saved tasks:", tasks);
+
     return task;
   }
 

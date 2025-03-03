@@ -16,18 +16,7 @@ export { default as StorageService } from "./storage/storageService";
  * Инициализирует все сервисы данных
  */
 export function initializeServices(): void {
-  // Импортируем сервисы
-  const {
-    ServiceDataService,
-    SystemDataService,
-    RequestDataService,
-    TaskDataService,
-    NotificationDataService,
-    AdminDataService,
-    UserDataService,
-  } = require("./index");
-
-  // Инициализируем данные в каждом сервисе
+  // Вместо использования require, напрямую импортируем и используем сервисы
   ServiceDataService.initialize();
   SystemDataService.initialize();
   RequestDataService.initialize();
